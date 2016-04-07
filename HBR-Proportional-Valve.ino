@@ -1,8 +1,10 @@
 #include <ArduinoJoystick.h>
 #include <LinearTransform.h>
+#include <ArduinoButton.h>
 
 ArduinoJoystick joystickX(0, 0);
 ArduinoJoystick joystickY(1, 1);
+ArduinoButton enableButton(2, 10);
 
 LinearTransform transform(-128, 126, -512, 512);
 
@@ -38,21 +40,31 @@ void setup()
 
 void loop()
 {
+  enableButton.poll();
+  
   if(joystickX.poll())
   {
     uint16_t value = joystickX.getValue();
     Serial.print("X joystick: ");
     Serial.print(value);
 
-    if (value > 0)
+    if (enableButton.isActive())
     {
-      analogWrite(VALVE_X_POS, value);
-      analogWrite(VALVE_X_NEG, 0);
+      if (value > 0)
+      {
+        analogWrite(VALVE_X_POS, value);
+        analogWrite(VALVE_X_NEG, 0);
+      }
+      else if (value < 0)
+      {
+        analogWrite(VALVE_X_POS, 0);
+        analogWrite(VALVE_X_NEG, value);
+      }
     }
-    else if (value < 0)
+    else
     {
       analogWrite(VALVE_X_POS, 0);
-      analogWrite(VALVE_X_NEG, value);
+      analogWrite(VALVE_X_NEG, 0);
     }
   }
   
@@ -62,15 +74,23 @@ void loop()
     Serial.print("Y joystick: ");
     Serial.print(value);
 
-    if (value > 0)
+    if (enableButton.isActive())
     {
-      analogWrite(VALVE_Y_POS, value);
-      analogWrite(VALVE_Y_NEG, 0);
+      if (value > 0)
+      {
+        analogWrite(VALVE_Y_POS, value);
+        analogWrite(VALVE_Y_NEG, 0);
+      }
+      else if (value < 0)
+      {
+        analogWrite(VALVE_Y_POS, 0);
+        analogWrite(VALVE_Y_NEG, value);
+      }
     }
-    else if (value < 0)
+    else
     {
       analogWrite(VALVE_Y_POS, 0);
-      analogWrite(VALVE_Y_NEG, value);
+      analogWrite(VALVE_Y_NEG, 0);
     }
   }
 }
