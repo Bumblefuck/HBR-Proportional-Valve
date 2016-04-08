@@ -1,96 +1,118 @@
-#include <ArduinoJoystick.h>
-#include <LinearTransform.h>
-#include <ArduinoButton.h>
+/* Read Joystick
+ * ------------
+ *
+ * Reads two analog pins that are supposed to be
+ * connected to a joystick made of two potentiometers
+ *
+ * We send three bytes back to the comp: one header and two
+ * with data as signed bytes, this will take the form:
+ *     Jxy\r\n
+ *
+ * x and y are integers and sent in ASCII
+ *
+ * http://www.0j0.org | http://arduino.berlios.de
+ * copyleft 2005 DojoDave for DojoCorp
+ */
 
-ArduinoJoystick joystickX(0, 0);
-ArduinoJoystick joystickY(1, 1);
-ArduinoButton enableButton(2, 10);
+int potPin = 0;
+int rampTime = 0;
 
-LinearTransform transform(-128, 126, -512, 512);
+static const int RAMP_UP = 0;
+static const int RAMP_DOWN = 1;
 
-#define VALVE_X_POS 3
-#define VALVE_X_NEG 5
-#define VALVE_Y_POS 6
-#define VALVE_Y_NEG 9
+// These arrays contain the configuration for the buttons.
+// buttonPins maps the buttons to the pins
+// buttonValues holds the values for the actual pins. I'm assuming INPUT_PULLUP
+// on the pin mode which means that HIGH is off
+// buttonOutputPins maps the buttons to which analog output pin should be used
+const int buttons = 4;
+int buttonPins[buttons] = {1, 2, 3, 4};
+int buttonValues[buttons] = {HIGH, HIGH, HIGH, HIGH};
+int buttonOutputPins[buttons] = {6, 9, 10, 11};
+int buttonRampValues[buttons] = {0, 0, 0, 0};
+unsigned long buttonRampTimes[buttons] = {0, 0, 0, 0};
 
-int pwmPins[] = {VALVE_X_POS, VALVE_X_NEG, VALVE_Y_POS, VALVE_Y_NEG};
+// Ramp Time bounds in milliseconds
+// The actual ramp time will be calculated in a range from minRampTime
+// to maxRampTime based on the potentiometer
+int minRampTime = 100;
+int maxRampTime = 3000;
 
-void setup()
-{
+void setup() {
   Serial.begin(9600);
-  
-  joystickX.setPoints(390, 520, 640);
-  joystickY.setPoints(390, 520, 640);
-  
-  joystickX.setDeadbands(5, 5, 5);
-  joystickY.setDeadbands(5, 5, 5);
-  
-  joystickX.setThreshold(5);
-  joystickY.setThreshold(5);
-  
-  joystickX.setTransformation(&transform);
-  joystickY.setTransformation(&transform);
 
-  for (int i = 0; i < 4; i++)
-  {
-    pinMode(pwmPins[i], OUTPUT);
-    analogWrite(pwmPins[i], 0);
+  // Set all the button input pins to be used in INPUT_PULLUP mode
+  for(int i = 0; i < buttons; i++) {
+    pinMode(buttonPins[i], INPUT_PULLUP);
   }
 }
 
-void loop()
-{
-  enableButton.poll();
-  
-  if(joystickX.poll())
-  {
-    uint16_t value = joystickX.getValue();
-    Serial.print("X joystick: ");
-    Serial.print(value);
+int mapPotToRamp(int potValue) {
+  // The analog input returns a value from 0 to 1023.
+  // We need to map this to a time value
+  int rampTime = (potValue * maxRampTime / 1023);
 
-    if (enableButton.isActive())
-    {
-      if (value > 0)
-      {
-        analogWrite(VALVE_X_POS, value);
-        analogWrite(VALVE_X_NEG, 0);
-      }
-      else if (value < 0)
-      {
-        analogWrite(VALVE_X_POS, 0);
-        analogWrite(VALVE_X_NEG, value);
-      }
-    }
-    else
-    {
-      analogWrite(VALVE_X_POS, 0);
-      analogWrite(VALVE_X_NEG, 0);
-    }
+  // This allows us to set a minimum ramp time to prevent it from ever being "0"
+  if(rampTime < minRampTime) {
+    rampTime = minRampTime;
   }
-  
-  if(joystickY.poll())
-  {
-    uint16_t value = joystickY.getValue();
-    Serial.print("Y joystick: ");
-    Serial.print(value);
+}
 
-    if (enableButton.isActive())
-    {
-      if (value > 0)
-      {
-        analogWrite(VALVE_Y_POS, value);
-        analogWrite(VALVE_Y_NEG, 0);
-      }
-      else if (value < 0)
-      {
-        analogWrite(VALVE_Y_POS, 0);
-        analogWrite(VALVE_Y_NEG, value);
-      }
-    }
-    else
-    {
-      analogWrite(VALVE_Y_POS, 0);
-      analogWrite(VALVE_Y_NEG, 0);
-    }
+// Map the ramp time from somewhere between 0 and 255
+int mapRampToValue(int currentValue, int direction, unsigned long time, int rampTime) {
+  int newValue = 0;
+
+  // Map the new value based on the current value and how much time has occurred.
+  if(direction == RAMP_UP) {
+    newValue = currentValue + ((time / rampTime) * 255);
+  } else {
+    newValue = currentValue - ((time / rampTime) * 255);
   }
+
+  // Prevent values higher than 255
+  if(newValue > 255) {
+    newValue = 255;
+  }
+
+  // Prevent values lower than 0
+  if(newValue < 0) {
+    newValue = 0;
+  }
+
+  return newValue;
+}
+
+void ramp(int button, int direction, int rampTime) {
+  // Calculate how long it's been since the last ramp change
+  unsigned long current = millis();
+  unsigned long difference = current - buttonRampTimes[button];
+
+  int outputValue = mapRampToValue(buttonRampValues[button], direction, current - difference, rampTime);
+  analogWrite(buttonOutputPins[button], outputValue);
+}
+
+void loop() {
+  // reads the value of the variable resistor
+  int potValue = analogRead(potPin);
+
+  rampTime = mapPotToRamp(potValue);
+
+  // Read all of the button values
+  for(int i = 0; i < buttons; i++) {
+    buttonValues[i] = digitalRead(buttonPins[i]);
+
+    int direction;
+
+    // Remember, we're doing PULLUP so this means if the button is pushed
+    if(buttonValues[i] == LOW) {
+      direction = RAMP_UP;
+    } else {
+      direction = RAMP_DOWN;
+    }
+
+    ramp(i, direction, rampTime);
+  }
+
+  // Give us a 100 millisecond delay to let the ramp do its thing
+  delay(100);
 }
