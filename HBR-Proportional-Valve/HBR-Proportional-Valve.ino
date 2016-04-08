@@ -53,8 +53,9 @@ void setup()
   joystickX.setTransformation(&transform);
   joystickY.setTransformation(&transform);
 
-  xValue = joystickX.getValue();
-  yValue = joystickY.getValue();
+  //get initial readings from the joystick axis
+  xValue = constrain(joystickX.getValue(), -255, 255);
+  yValue = constrain(joystickY.getValue(), -255, 255);
 
 
   //set all the pins as outputs and initialize to off
