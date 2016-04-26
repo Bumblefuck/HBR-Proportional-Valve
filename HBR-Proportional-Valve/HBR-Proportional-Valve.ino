@@ -35,7 +35,7 @@ int pwmPins[] = {VALVE_X_POS, VALVE_X_NEG, VALVE_Y_POS, VALVE_Y_NEG};
 void setup()
 {
   Serial.begin(9600);
-  
+
   //calibrate for joystick found here: http://uk.rs-online.com/web/p/products/8430838/
   //set Low/Center/High positions
   joystickX.setPoints(390, 520, 640);
@@ -69,7 +69,7 @@ void setup()
 void loop()
 {
   enableButton.poll();  //check for changes in the button enable state
-  
+
   //check for updates in the joystick X position
   if(joystickX.poll())
   {
@@ -80,7 +80,7 @@ void loop()
     //only allow the system to move if the button is active
     if (enableButton.isActive())
     {
-      if (xValue > 0)  
+      if (xValue > 0)
       {
         analogWrite(VALVE_X_POS, abs(xValue));
         analogWrite(VALVE_X_NEG, 0);
@@ -90,6 +90,12 @@ void loop()
         analogWrite(VALVE_X_POS, 0);
         analogWrite(VALVE_X_NEG, abs(xValue));
       }
+      else
+      {
+        analogWrite(VALVE_X_POS, 0);
+        analogWrite(VALVE_X_NEG, 0);
+      }
+
     }
 
     //otherwise turn off both valves for X axis
@@ -99,7 +105,7 @@ void loop()
       analogWrite(VALVE_X_NEG, 0);
     }
   }
-  
+
 
 
   //check for updates in the joystick Y position
@@ -122,6 +128,11 @@ void loop()
         analogWrite(VALVE_Y_POS, 0);
         analogWrite(VALVE_Y_NEG, abs(yValue));
       }
+      else
+      {
+        analogWrite(VALVE_Y_POS, 0);
+        analogWrite(VALVE_Y_NEG, 0);
+      }
     }
 
     //otherwise turn off both valves for Y axis
@@ -134,19 +145,10 @@ void loop()
 
 }
 
-
-void printPositionData(){
+void printPositionData()
+{
   Serial.print("Joystick Position - X: ");
   Serial.print(xValue);
   Serial.print("\t Y: ");
   Serial.println(yValue);
 }
-
-
-
-
-
-
-
-
-
