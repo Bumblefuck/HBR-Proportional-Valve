@@ -69,13 +69,13 @@ void initValveAxes() {
 
 
 // Set the positive or negative valve position
-// index - the array index for this valve
+// axis - the array index (axis) for this valve
 // valvePosition - the desired position
-void setValve(int index, int valvePosition) {
+void setValve(int axis, int valvePosition) {
   // Set the positive valve position to zero if the desired position is 0 (or less), otherwise the desired value
-  analogWrite(valve[index].pos, valvePosition <= 0 ? 0 : valvePosition);
+  analogWrite(valve[axis].pos, valvePosition <= 0 ? 0 : valvePosition);
   // Set the negative valve position to zero if the desired position is 0 (or more), otherwise the absolute desired value
-  analogWrite(valve[index].neg, valvePosition >= 0 ? 0 : abs(valvePosition));
+  analogWrite(valve[axis].neg, valvePosition >= 0 ? 0 : abs(valvePosition));
 }
 
 
