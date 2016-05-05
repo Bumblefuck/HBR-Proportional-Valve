@@ -44,20 +44,21 @@ ValvePin valve[] = {
 
 // Perform all initial setup for the joystick axes
 void initJoystickAxes() {
+  // X axis
+  joystick[axisX].setPoints(390, 520, 640); // Low/Center/High positions
+  joystick[axisX].setDeadbands(5, 5, 5);
+  joystick[axisX].setThreshold(5);          // minimum change to trigger an event
+
+  // Y axis
+  joystick[axisY].setPoints(390, 520, 640); // Low/Center/High positions
+  joystick[axisY].setDeadbands(5, 5, 5);
+  joystick[axisY].setThreshold(5);          // minimum change to trigger an event
 
   // set up the transform from the input pots to the output PWM signals for the valves
   LinearTransform* joystickPotTransform = new LinearTransform(-128, 126, -512, 512);
+  joystick[axisX].setTransformation(joystickPotTransform);
+  joystick[axisY].setTransformation(joystickPotTransform);
 
-  
-  //calibrate for joystick found here: http://uk.rs-online.com/web/p/products/8430838/
-  for (int axis = axisX; axis <= axisY; ++axis) {
-    joystick[axis].setPoints(390, 520, 640); //set Low/Center/High positions
-    joystick[axis].setDeadbands(5, 5, 5);    //set the deadbands
-    joystick[axis].setThreshold(5);          //set the minimum change to trigger an event
- 
-    //set the transform from input values to output values
-    joystick[axis].setTransformation(joystickPotTransform);
-  }
 }
 
 // Perform all the inital setup for the valve pins
