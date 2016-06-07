@@ -9,7 +9,7 @@ const int PIN_EN_BTN      = 10;
 const int PIN_VALVE_X_POS = 3;
 const int PIN_VALVE_X_NEG = 5;
 const int PIN_VALVE_Y_POS = 6;
-const int PIN_VALVE_Y_NEG = 7;
+const int PIN_VALVE_Y_NEG = 9;
 
 // Valves have a positive and a negative actuation - we need a pin for each.
 // This structure captures that.
