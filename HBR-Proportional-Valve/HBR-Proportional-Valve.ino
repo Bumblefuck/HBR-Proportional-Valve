@@ -121,8 +121,9 @@ void loop()
   for (int axis = axisX; axis <= axisY; ++axis) {
     gotJoystick = gotJoystick || joystick[axis].poll();
 
-    // read the joystick value and constrain it, but only send zero unless the enable button is pressed
+    // read the joystick value and constrain it
     int stickPosition = constrain(joystick[axis].getValue(), -255, 255);
+    // set valve position to zero unless enable button is pressed
     setValve(axis, isEnabled ? stickPosition : 0);
   }
 
