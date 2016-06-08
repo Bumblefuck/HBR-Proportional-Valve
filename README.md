@@ -1,5 +1,9 @@
 # HBR-Proportional-Valve
-This is an arduino C sketch for controlling a proportional valve with potentiometer joy stick.
+
+This is an arduino C sketch for controlling proportional valves using the axes of a
+potentiometer joystick as inputs.  An enable button / kill switch provides an instant
+zero output to the valves.
+
 
 ## Installation
 

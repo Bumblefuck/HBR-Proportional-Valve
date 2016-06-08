@@ -9,7 +9,7 @@ const int PIN_EN_BTN      = 10;
 const int PIN_VALVE_X_POS = 3;
 const int PIN_VALVE_X_NEG = 5;
 const int PIN_VALVE_Y_POS = 6;
-const int PIN_VALVE_Y_NEG = 7;
+const int PIN_VALVE_Y_NEG = 9;
 
 // Valves have a positive and a negative actuation - we need a pin for each.
 // This structure captures that.
@@ -110,10 +110,11 @@ void setup()
 void loop()
 {
    bool isEnabled = false;   // indicates the enable button position
+   bool gotButton = false;   // indicates whether an updated button position was received
    bool gotJoystick = false; // indicates whether an updated joystick position was received
 
-   //check the state of the enable button
-   enableButton.poll();
+   // check the state of the enable button and see if it's changed
+   gotButton = enableButton.poll();
    isEnabled = enableButton.isActive();
 
   // read data from each joystick axis and apply it to the valve.
@@ -121,13 +122,14 @@ void loop()
   for (int axis = axisX; axis <= axisY; ++axis) {
     gotJoystick = gotJoystick || joystick[axis].poll();
 
-    // read the joystick value and constrain it, but only send zero unless the enable button is pressed
+    // read the joystick value and constrain it
     int stickPosition = constrain(joystick[axis].getValue(), -255, 255);
+    // set valve position to zero unless enable button is pressed
     setValve(axis, isEnabled ? stickPosition : 0);
   }
 
   // limit logging by only printing stuff out if we received a change
-  if (gotJoystick) {
+  if (gotButton || gotJoystick) {
     printPositionData(joystick[axisX].getValue(), joystick[axisY].getValue(), isEnabled);
   }
 }
