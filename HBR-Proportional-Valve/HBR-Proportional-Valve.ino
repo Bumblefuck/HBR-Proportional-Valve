@@ -31,6 +31,7 @@ ArduinoJoystick joystick[] = {
 
 // Set up the button which will control start/stop
 ArduinoButton enableButton(2, PIN_EN_BTN);
+bool lastButtonState = false;
 
 // Set up the valves as an array of structs.
 // ValvePin structs can be initialized like arrays, as such:
@@ -110,11 +111,14 @@ void setup()
 void loop()
 {
    bool isEnabled = false;   // indicates the enable button position
+   bool gotButton = false;   // indicates whether an updated button position was received
    bool gotJoystick = false; // indicates whether an updated joystick position was received
 
-   //check the state of the enable button
+   //check the state of the enable button and see if it's changed
    enableButton.poll();
    isEnabled = enableButton.isActive();
+   gotButton = isEnabled != lastButtonState;
+   lastButtonState = isEnabled;
 
   // read data from each joystick axis and apply it to the valve.
   // if the data is new, make a note of it
@@ -128,7 +132,7 @@ void loop()
   }
 
   // limit logging by only printing stuff out if we received a change
-  if (gotJoystick) {
+  if (gotButton || gotJoystick) {
     printPositionData(joystick[axisX].getValue(), joystick[axisY].getValue(), isEnabled);
   }
 }
