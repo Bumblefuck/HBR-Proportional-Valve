@@ -10,10 +10,16 @@ You need the "Universal Inputs" library by Dan Nixon, which can be installed via
 
 | Name           | Type    | Pin number |
 | -------------  | -------:| ---------- |
-| Joystick X     | Analog  | 0          |
-| Joystick Y     | Analog  | 1          |
+| Joystick X     | Analog  | A0         |
+| Joystick Y     | Analog  | A1         |
+| Ramp Timer Pot | Analog  | A2         | 
 | Enable button  | Digital | 10         |
-| Solenoid X +   | Digital | 3          |
-| Solenoid X -   | Digital | 5          |
-| Solenoid Y +   | Digital | 6          |
-| Solenoid Y -   | Digital | 9          |
+| Up Button      | Digital | 13         | 
+| Down Button    | Digital | 12         | 
+| Left Button    | Digital | 8          | 
+| Right Button   | Digital | 7          |
+| Solenoid X +   | Digital | 3 PWM      |
+| Solenoid X -   | Digital | 5 PWM      |
+| Solenoid Y +   | Digital | 6 PWM      |
+| Solenoid Y -   | Digital | 9 PWM      |
+
