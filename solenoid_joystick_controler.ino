@@ -6,7 +6,7 @@ both joysticks are 10Kohm(ers)
 press and hold the button to operate
 
 no guranteease if she don't work 
-I provided a bit of a dead spot center of the joistick 
+I provided a bit of a dead spot center of the joystick 
 */
 
 int button=10;
