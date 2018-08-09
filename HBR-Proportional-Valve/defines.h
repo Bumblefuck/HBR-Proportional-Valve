@@ -31,6 +31,6 @@
 #define PIN_VALVE_Y_NEG 9 //PWM
 
 // //Define array axis
-// #define AXIS_X 0
-// #define AXIS_Y 1
+ #define AXIS_X 0
+ #define AXIS_Y 1
 #endif

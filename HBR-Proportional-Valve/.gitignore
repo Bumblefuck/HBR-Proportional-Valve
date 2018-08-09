@@ -1,2 +1,6 @@
 #ignore the vscode folder
 .vscode
+
+#ignore other folders
+__vm
+Debug

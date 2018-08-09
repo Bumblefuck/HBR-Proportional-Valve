@@ -1,133 +1,178 @@
-#include <ArduinoJoystick.h>
-#include <LinearTransform.h>
-#include <ArduinoButton.h>
+/**
+* Let the bumblefuckery commence.
+*
+* Contributors: 
+* -----------------------------
+* Demetry Romanowski 
+* demetryromanowski@gmail.com 
+* Ontario, Canada
+* -----------------------------
+*/
 
-// declare the pins for the inputs and outputs
-const int PIN_JOY_X       = 0;
-const int PIN_JOY_Y       = 1;
-const int PIN_EN_BTN      = 10;
-const int PIN_VALVE_X_POS = 3;
-const int PIN_VALVE_X_NEG = 5;
-const int PIN_VALVE_Y_POS = 6;
-const int PIN_VALVE_Y_NEG = 7;
+#include <Universal_Inputs/ArduinoJoystick.h>
+#include <Universal_Inputs/LinearTransform.h>
+#include <Universal_Inputs/ArduinoButton.h>
 
-// Valves have a positive and a negative actuation - we need a pin for each.
-// This structure captures that.
-struct ValvePin {
+#include "defines.h"
+
+/**
+ * Valve pins struct typedef'd for easier usage
+ */
+typedef struct valve_pin {
   int pos;
   int neg;
-};
+} ValvePin;
 
-// Indexes for joystick-related arrays
-const int axisX = 0;
-const int axisY = 1;
-
-// Set up an array of joystick axes
-// This is equivalent to "joystick[axisX] = ArduinoJoystick(0, PIN_JOY_X)"
+/**
+ * Set up joystick axis
+ */
 ArduinoJoystick joystick[] = {
   ArduinoJoystick(0, PIN_JOY_X),
   ArduinoJoystick(1, PIN_JOY_Y)
 };
 
 // Set up the button which will control start/stop
-ArduinoButton enableButton(2, PIN_EN_BTN);
+ArduinoButton *en_btn = new ArduinoButton(2, PIN_EN_BTN);
+ArduinoButton *up_btn = new ArduinoButton(2, UP_BTN); 
+ArduinoButton *down_btn = new ArduinoButton(2, DWN_BTN);
+ArduinoButton *left_btn = new ArduinoButton(2, LEFT_BTN);
 
-// Set up the valves as an array of structs.
-// ValvePin structs can be initialized like arrays, as such:
-//   ValvePin myValve = { 2, 5 };
-// So this is a 2-element array of 2-element structs, defined in shorthand:
-ValvePin valve[] = {
+//ArduinoButton *up_btn();
+
+/************************************************************/
+/**
+ * Set up the valves as an array of structs. 
+ * ValvePins can be initialized like arrays as such: 
+ *		ValvePin myValve = { 2, 5 } 
+ * 
+ * So this is a two-element array of two element structs, defined in shorthand
+ */
+ValvePin valve[] {
   { PIN_VALVE_X_POS, PIN_VALVE_X_NEG },
   { PIN_VALVE_Y_POS, PIN_VALVE_Y_NEG },
 };
 
+/************************************************************/
+/**
+ * Init the joystick axes
+ **/
+void init_joystick_axes() {
+	// X axis
+	joystick[AXIS_X].setPoints(390, 520, 640); // Low/Center/High positions
+	joystick[AXIS_X].setDeadbands(5, 5, 5);
+	joystick[AXIS_X].setThreshold(5);          // minimum change to trigger an event
 
-// Perform all initial setup for the joystick axes
-void initJoystickAxes() {
-  // X axis
-  joystick[axisX].setPoints(390, 520, 640); // Low/Center/High positions
-  joystick[axisX].setDeadbands(5, 5, 5);
-  joystick[axisX].setThreshold(5);          // minimum change to trigger an event
+	// Y axis
+	joystick[AXIS_Y].setPoints(390, 520, 640); // Low/Center/High positions
+	joystick[AXIS_Y].setDeadbands(5, 5, 5);
+	joystick[AXIS_Y].setThreshold(5);          // minimum change to trigger an event
 
-  // Y axis
-  joystick[axisY].setPoints(390, 520, 640); // Low/Center/High positions
-  joystick[axisY].setDeadbands(5, 5, 5);
-  joystick[axisY].setThreshold(5);          // minimum change to trigger an event
-
-  // set up the transform from the input pots to the output PWM signals for the valves
-  LinearTransform* joystickPotTransform = new LinearTransform(-128, 126, -512, 512);
-  joystick[axisX].setTransformation(joystickPotTransform);
-  joystick[axisY].setTransformation(joystickPotTransform);
+	// set up the transform from the input pots to the output PWM signals for the valves
+	LinearTransform* joystick_pot_transform = new LinearTransform(-128, 126, -512, 512);
+	joystick[AXIS_X].setTransformation(joystick_pot_transform);
+	joystick[AXIS_Y].setTransformation(joystick_pot_transform);
 
 }
 
-// Perform all the inital setup for the valve pins
-void initValveAxes() {
-  for (int axis = axisX; axis <= axisY; ++axis) {
-    pinMode(valve[axis].pos, OUTPUT);
-    pinMode(valve[axis].neg, OUTPUT);
-  }
+/************************************************************/
+/**
+ * Init the valve axes
+ */
+void init_valve_axis() {
+	ValvePin *valve = &*valve; 
+
+	while (valve != nullptr) {
+		pinMode(valve->neg, OUTPUT);
+		pinMode(valve->pos, OUTPUT);
+		valve++;
+	}
+
+	/*for (int axis = AXIS_X; axis <= AXIS_Y; ++axis) {
+		pinMode(valve[axis].pos, OUTPUT);
+		pinMode(valve[axis].neg, OUTPUT);
+	}*/
 }
-
-
-// Set the positive or negative valve position
-// axis - the array index (axis) for this valve
-// valvePosition - the desired position
-void setValve(int axis, int valvePosition) {
+/************************************************************/
+/**
+ * Set the positive or negative valve position
+ * @param axis The axis for this valve
+ * @param valve_position The desired position
+ */
+void set_valve(int axis, int valve_position) {
   // Set the positive valve position to zero if the desired position is 0 (or less), otherwise the desired value
-  analogWrite(valve[axis].pos, valvePosition <= 0 ? 0 : valvePosition);
+  analogWrite(valve[axis].pos, valve_position <= 0 ? 0 : valve_position);
   // Set the negative valve position to zero if the desired position is 0 (or more), otherwise the absolute desired value
-  analogWrite(valve[axis].neg, valvePosition >= 0 ? 0 : abs(valvePosition));
+  analogWrite(valve[axis].neg, valve_position >= 0 ? 0 : abs(valve_position));
 }
 
-
-// print some debugging output about the joystick positions
-void printPositionData(int xValue, int yValue, bool isEnabled) {
-  Serial.print("Joystick Position - X: ");
-  Serial.print(xValue);
-  Serial.print("\t Y: ");
-  Serial.print(yValue);
-  Serial.print("\t");
-  Serial.println(isEnabled ? "enabled" : "DISABLED");
+/************************************************************/
+/**
+ * Print the positional data
+ * @param x_value The x value
+ * @param y_value The y value
+ * @param is_enabled If its enabled
+ */
+void print_position_data(int x_value, int y_value, bool is_enabled) {
+	Serial.print("Joystick Position - X: ");
+	Serial.print(x_value);
+	Serial.print("\t Y: ");
+	Serial.print(y_value);
+	Serial.print("\t");
+	Serial.println(is_enabled ? "enabled" : "DISABLED");
 }
 
-
+/************************************************************/
+/**
+ * Setup function, runs once only
+ */
 void setup()
 {
-  Serial.begin(9600);
+	//Set the PWM clock speed prescaler. 
+	TCCR1B = TCCR1B & B11111000 | B00000001;
 
-  // initial setup of inputs and outputs
-  initJoystickAxes();
-  initValveAxes();
+#ifdef __DEBUG
+	//Wait for serial connection to become a available
+	while (!Serial.available)
+		;
+#endif
 
-  // set all the valves to "off" -- the 0 position
-  for (int axis = axisX; axis <= axisY; ++axis) {
-    setValve(axis, 0);
-  }
+	Serial.begin(9600);
+
+	// initial setup of inputs and outputs
+	init_joystick_axes();
+	init_valve_axis();
+					
+	// set all the valves to "off" -- the 0 position
+	for (int axis = AXIS_X; axis <= AXIS_Y; ++axis) {
+		set_valve(axis, 0);
+	}
 }
 
-
+/************************************************************/
+/**
+ * Loop function runs constantly
+ */
 void loop()
 {
-   bool isEnabled = false;   // indicates the enable button position
-   bool gotJoystick = false; // indicates whether an updated joystick position was received
+	bool is_enabled = false;   // indicates the enable button position
+	bool got_joystick = false; // indicates whether an updated joystick position was received
 
-   //check the state of the enable button
-   enableButton.poll();
-   isEnabled = enableButton.isActive();
+	//check the state of the enable button
+	en_btn->poll();
+	is_enabled = en_btn->isActive();
 
-  // read data from each joystick axis and apply it to the valve.
-  // if the data is new, make a note of it
-  for (int axis = axisX; axis <= axisY; ++axis) {
-    gotJoystick = gotJoystick || joystick[axis].poll();
+	// read data from each joystick axis and apply it to the valve.
+	// if the data is new, make a note of it
+	for (int axis = AXIS_X; axis <= AXIS_Y; ++axis) {
+		got_joystick = got_joystick || joystick[axis].poll();
 
-    // read the joystick value and constrain it, but only send zero unless the enable button is pressed
-    int stickPosition = constrain(joystick[axis].getValue(), -255, 255);
-    setValve(axis, isEnabled ? stickPosition : 0);
-  }
+		// read the joystick value and constrain it, but only send zero unless the enable button is pressed
+		const int stick_position = constrain(joystick[axis].getValue(), -255, 255);
+		set_valve(axis, is_enabled ? stick_position : 0);
+	}
 
-  // limit logging by only printing stuff out if we received a change
-  if (gotJoystick) {
-    printPositionData(joystick[axisX].getValue(), joystick[axisY].getValue(), isEnabled);
-  }
+	// limit logging by only printing stuff out if we received a change
+	if (got_joystick) {
+		print_position_data(joystick[AXIS_X].getValue(), joystick[AXIS_Y].getValue(), is_enabled);
+	}
 }
