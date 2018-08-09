@@ -83,10 +83,20 @@
     <ClInclude Include="defines.h">
       <FileType>CppCode</FileType>
     </ClInclude>
+    <ClInclude Include="logger.h">
+      <FileType>CppCode</FileType>
+    </ClInclude>
+    <ClInclude Include="valve_controller.h">
+      <FileType>CppCode</FileType>
+    </ClInclude>
     <ClInclude Include="__vm\.HBR-Proportional-Valve.vsarduino.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="board.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="logger.c" />
+    <ClCompile Include="valve_controller.c" />
   </ItemGroup>
   <PropertyGroup>
     <DebuggerFlavor>VisualMicroDebugger</DebuggerFlavor>

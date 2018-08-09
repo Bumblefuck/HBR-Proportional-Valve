@@ -32,6 +32,9 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <Text Include="board.txt" />
+  </ItemGroup>
+  <ItemGroup>
     <ClCompile Include="logger.c">
       <Filter>Source Files</Filter>
     </ClCompile>
